@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMMA | Semantic Mind-Map Archive</title>
+    <!-- Premium Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@300;600;900&display=swap"
+        rel="stylesheet">
+    <!-- Graph Visualization Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="dark-theme">
+    <div id="app-container">
+        <!-- Sidebar: Archive Navigation -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">SMMA</div>
+                <p>Knowledge Archive</p>
+            </div>
+            <nav id="archive-list">
+                <div class="nav-section-title">RECENT NOTES</div>
+                <ul id="notes-ul">
+                    <li class="loading">Loading archives...</li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="btn-ingest" class="btn-primary">New Memory</button>
+            </div>
+        </aside>
+
+        <main id="workspace">
+            <header id="workspace-header">
+                <div class="header-activity">
+                    <span class="pulse-icon"></span>
+                    <span id="system-status">Socrates Neural Core Active</span>
+                </div>
+                <div id="insight-feed">
+                    <!-- Real-time relationship discoveries will flow here -->
+                </div>
+            </header>
+
+            <div id="tutor-container">
+                <div class="tutor-header">
+                    <div class="header-main">
+                        <h1>Socratic Mirror</h1>
+                        <span id="topic-badge" class="topic-badge">Neural Syncing...</span>
+                    </div>
+                    <p class="subtitle">Challenge your thoughts with the internal archive vs external ground truth.</p>
+                </div>
+
+                <div id="chat-history">
+                    <div class="msg ai">Welcome to your intellectual mirror. What subject shall we deconstruct today?
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input"
+                        placeholder="Reflect on your knowledge or inject a new memory...">
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Side: Node Detail Slide Panel -->
+        <aside id="detail-pane" class="glass-morphism">
+            <header class="detail-header">
+                <button class="btn-close-pane">✕</button>
+                <h2 id="detail-title">Note Title</h2>
+            </header>
+            <div class="detail-meta">
+                <span id="detail-type">Type</span> • <span id="detail-id">ID</span>
+            </div>
+            <div id="detail-content" class="detail-body">
+                Detailed content will appear here...
+            </div>
+            <footer class="detail-footer">
+                <button id="btn-delete-archive" class="btn-danger">Delete Memory</button>
+            </footer>
+        </aside>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-ingest" class="modal">
+        <div class="modal-content glass-morphism">
+            <h3>Add New Knowledge</h3>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">Your studies will be synchronized into the neural archive.</p>
+            <input type="text" id="ingest-title" placeholder="Topic Title">
+            <textarea id="ingest-content" placeholder="Content..."></textarea>
+            <div class="modal-actions">
+                <button id="btn-cancel" class="btn-text">Cancel</button>
+                <button id="btn-submit-ingest" class="btn-primary">Sync to Archive</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>

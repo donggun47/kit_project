@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+langchain
+langchain-openai
+langchain-chroma
+langgraph
+python-dotenv
+pydantic
+typing-extensions
+psycopg[binary]
+requests
+mcp
+fastmcp
+langchain-mcp-adapters
