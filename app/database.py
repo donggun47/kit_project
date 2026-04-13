@@ -78,6 +78,29 @@ def get_vector_store(openai_api_key: str, pinecone_api_key: str = None, index_na
 
     # 2. Return LangChain Wrapper
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    
+    # Pinecone data plane may take extra time to become addressable after creation
+    max_init_retries = 15
+    data_plane_ready = False
+    
+    for attempt in range(max_init_retries):
+        try:
+            # Force a connection to the data plane to ensure it's actually routable
+            test_index = pc.Index(index_name)
+            test_index.describe_index_stats()
+            data_plane_ready = True
+            break  # Success
+        except Exception as e:
+            if "404" in str(e).lower() or "not_found" in str(e).lower() or "not found" in str(e).lower() or "service_unavailable" in str(e).lower():
+                print(f"Data plane for '{index_name}' not yet ready (attempt {attempt+1}/{max_init_retries}). Waiting...")
+                import time
+                time.sleep(5)
+            else:
+                raise e
+                
+    if not data_plane_ready:
+        raise RuntimeError(f"Failed to connect to Pinecone data plane for '{index_name}' after {max_init_retries} attempts.")
+        
     vector_store = Pinecone(
         index_name=index_name,
         embedding=embeddings,
