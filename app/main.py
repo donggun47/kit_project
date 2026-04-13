@@ -58,9 +58,15 @@ class IngestRequest(BaseModel):
     title: str
     content: str
     source_type: str = "manual"
+    openai_api_key: Optional[str] = None
+    pinecone_api_key: Optional[str] = None
+    pinecone_index: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str
+    openai_api_key: Optional[str] = None
+    pinecone_api_key: Optional[str] = None
+    pinecone_index: Optional[str] = None
 
 # --- Routes ---
 @app.get("/")
@@ -84,15 +90,28 @@ def get_graph_data():
 @app.post("/ingest")
 def ingest_data(req: IngestRequest):
     try:
-        archive_id = SMMAService.ingest_data(req.title, req.content, req.source_type, OPENAI_API_KEY)
+        # Prioritize pass-thru keys, then environment variables
+        target_openai_key = req.openai_api_key or OPENAI_API_KEY
+        
+        # Override environment variables for the scope of this request if provided
+        if req.pinecone_api_key: os.environ["PINECONE_API_KEY"] = req.pinecone_api_key
+        if req.pinecone_index: os.environ["PINECONE_INDEX_NAME"] = req.pinecone_index
+
+        archive_id = SMMAService.ingest_data(req.title, req.content, req.source_type, target_openai_key)
         return {"status": "success", "id": archive_id}
     except Exception as e:
+        logger.error(f"Ingest error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/chat")
 def chat_interaction(req: ChatRequest):
     try:
-        return SMMAService.chat_interaction(req.message, OPENAI_API_KEY)
+        target_openai_key = req.openai_api_key or OPENAI_API_KEY
+        
+        if req.pinecone_api_key: os.environ["PINECONE_API_KEY"] = req.pinecone_api_key
+        if req.pinecone_index: os.environ["PINECONE_INDEX_NAME"] = req.pinecone_index
+
+        return SMMAService.chat_interaction(req.message, target_openai_key)
     except Exception as e:
         logger.error(f"Chat service error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

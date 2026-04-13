@@ -555,6 +555,23 @@ body {
     transform: rotate(90deg);
 }
 
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.input-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
 #detail-title {
     font-family: 'Outfit';
     font-size: 1.6rem;

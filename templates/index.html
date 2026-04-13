@@ -30,6 +30,7 @@
             </nav>
             <div class="sidebar-footer">
                 <button id="btn-ingest" class="btn-primary">New Memory</button>
+                <button id="btn-settings" class="btn-icon" title="Neural Settings">⚙️</button>
             </div>
         </aside>
 
@@ -83,16 +84,23 @@
         </aside>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-ingest" class="modal">
+    <div id="modal-settings" class="modal">
         <div class="modal-content glass-morphism">
-            <h3>Add New Knowledge</h3>
-            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">Your studies will be synchronized into the neural archive.</p>
-            <input type="text" id="ingest-title" placeholder="Topic Title">
-            <textarea id="ingest-content" placeholder="Content..."></textarea>
+            <h3>Neural Settings</h3>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">Configure your API credentials. Keys are stored locally in your browser.</p>
+            
+            <label class="input-label">OpenAI API Key</label>
+            <input type="password" id="setting-openai-key" placeholder="sk-...">
+            
+            <label class="input-label">Pinecone API Key</label>
+            <input type="password" id="setting-pinecone-key" placeholder="pcsk-...">
+            
+            <label class="input-label">Pinecone Index Name</label>
+            <input type="text" id="setting-pinecone-index" placeholder="smma-brains">
+            
             <div class="modal-actions">
-                <button id="btn-cancel" class="btn-text">Cancel</button>
-                <button id="btn-submit-ingest" class="btn-primary">Sync to Archive</button>
+                <button id="btn-settings-cancel" class="btn-text">Cancel</button>
+                <button id="btn-settings-save" class="btn-primary">Save Config</button>
             </div>
         </div>
     </div>

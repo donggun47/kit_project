@@ -5,16 +5,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatHistory = document.getElementById('chat-history');
     const archiveList = document.getElementById('notes-ul');
     const modalIngest = document.getElementById('modal-ingest');
+    const modalSettings = document.getElementById('modal-settings');
+    const titleIn = document.getElementById('ingest-title');
+    const contentIn = document.getElementById('ingest-content');
     const detailPane = document.getElementById('detail-pane');
     const sysStatus = document.getElementById('system-status');
     let currentSelectedId = null;
 
-    // 2. Archive Loading Logic (With Cache-Busting)
+    // 1-1. Neural Credentials Management (LocalStorage)
+    const getNeuralConfig = () => ({
+        openai: localStorage.getItem('smma_openai_key') || "",
+        pinecone: localStorage.getItem('smma_pinecone_key') || "",
+        index: localStorage.getItem('smma_pinecone_index') || "smma-brains"
+    });
+
+    const saveNeuralConfig = (openai, pinecone, index) => {
+        localStorage.setItem('smma_openai_key', openai);
+        localStorage.setItem('smma_pinecone_key', pinecone);
+        localStorage.setItem('smma_pinecone_index', index);
+        alert("Neural configuration updated successfully.");
+        if (modalSettings) modalSettings.style.display = 'none';
+    };
+
+    // Initialize Settings Inputs
+    const setOpenAI = document.getElementById('setting-openai-key');
+    const setPinecone = document.getElementById('setting-pinecone-key');
+    const setIndex = document.getElementById('setting-pinecone-index');
+    
+    const config = getNeuralConfig();
+    if(setOpenAI) setOpenAI.value = config.openai;
+    if(setPinecone) setPinecone.value = config.pinecone;
+    if(setIndex) setIndex.value = config.index;
+
+    // 2. Archive Loading Logic
     async function loadArchives() {
         if (!archiveList) return;
         archiveList.innerHTML = '<li class="loading">Syncing neural subjects...</li>';
         try {
-            // Added cache: 'no-store' to force fresh data from Pinecone/DB
             const response = await fetch(`${API_BASE}/graph/data`, { cache: 'no-store' });
             const data = await response.json();
             
@@ -53,10 +80,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Detail Pane Logic
     function showNoteDetails(data, id) {
         currentSelectedId = id;
-        document.getElementById('detail-title').textContent = data.label;
-        document.getElementById('detail-type').textContent = data.type || 'study';
-        document.getElementById('detail-id').textContent = id;
-        document.getElementById('detail-content').textContent = data.content || 'No content available.';
+        const dT = document.getElementById('detail-title');
+        const dTy = document.getElementById('detail-type');
+        const dID = document.getElementById('detail-id');
+        const dC = document.getElementById('detail-content');
+        if(dT) dT.textContent = data.label;
+        if(dTy) dTy.textContent = data.type || 'study';
+        if(dID) dID.textContent = id;
+        if(dC) dC.textContent = data.content || 'No content available.';
         detailPane.classList.add('open');
     }
 
@@ -81,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { alert("Delete failed."); }
     }
 
-    // 4. Chat Logic (Bilingual Socratic Mirror)
+    // 4. Chat Logic
     async function sendMessage() {
         const msg = chatInput.value.trim();
         if (!msg) return;
@@ -90,20 +121,29 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
         if (sysStatus) sysStatus.textContent = "Socrates is thinking...";
         
+        const conf = getNeuralConfig();
+
         try {
             const response = await fetch(`${API_BASE}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: msg }),
+                body: JSON.stringify({ 
+                    message: msg,
+                    openai_api_key: conf.openai,
+                    pinecone_api_key: conf.pinecone,
+                    pinecone_index: conf.index
+                }),
                 cache: 'no-store'
             });
 
             if (response.ok) {
                 const data = await response.json();
                 appendMessage('ai', data.question);
-                if (data.topic) document.getElementById('topic-badge').textContent = data.topic;
+                const badge = document.getElementById('topic-badge');
+                if (data.topic && badge) badge.textContent = data.topic;
             } else {
-                appendMessage('ai', "Neural link interrupted. Please try again.");
+                const err = await response.json();
+                appendMessage('ai', `Neural link interrupted: ${err.detail || "Check API Keys"}`);
             }
         } catch (err) {
             appendMessage('ai', "Connection to neural core failed.");
@@ -116,11 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = `msg ${role}`;
         div.textContent = text;
-        chatHistory.appendChild(div);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
+        if(chatHistory) {
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
     }
 
-    // 5. Ingestion Logic (Enhanced with Global Guard to prevent duplicates)
+    // 5. Ingestion Logic
     let isIngesting = false;
     async function submitIngestion() {
         const btn = document.getElementById('btn-submit-ingest');
@@ -129,31 +171,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = titleInput.value.trim();
         const content = contentInput.value.trim();
 
-        // Dual checking: Boolean guard + Button disabled status
-        if (!title || !content || isIngesting || btn.disabled) return;
+        if (!title || !content || isIngesting || (btn && btn.disabled)) return;
         
+        const conf = getNeuralConfig();
         isIngesting = true;
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = "Syncing...";
+        const originalText = btn ? btn.textContent : "Sync";
+        if(btn) {
+            btn.disabled = true;
+            btn.textContent = "Syncing...";
+        }
 
         try {
             const response = await fetch(`${API_BASE}/ingest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content }),
+                body: JSON.stringify({ 
+                    title, 
+                    content,
+                    openai_api_key: conf.openai,
+                    pinecone_api_key: conf.pinecone,
+                    pinecone_index: conf.index
+                }),
                 cache: 'no-store'
             });
 
             if (response.ok) {
-                // Success: Immediate UI cleanup
                 if (modalIngest) modalIngest.style.display = 'none';
                 titleInput.value = '';
                 contentInput.value = '';
                 await loadArchives();
             } else {
                 const errorData = await response.json();
-                alert("Archive Sync Failed: " + (errorData.detail || "Unknown error"));
+                alert("Archive Sync Failed: " + (errorData.detail || "Check API Keys"));
             }
         } catch (err) { 
             console.error(err);
@@ -168,58 +217,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 6. Event Listeners
-    const titleIn = document.getElementById('ingest-title');
-    const contentIn = document.getElementById('ingest-content');
-
-    // Title field: Enter to submit
-    if (titleIn) {
-        titleIn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                submitIngestion();
-            }
-        });
-    }
-
-    // Content field: Ctrl + Enter to submit
-    if (contentIn) {
-        contentIn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                e.preventDefault();
-                submitIngestion();
-            }
-        });
-    }
-
-    const chatIn = document.getElementById('chat-input');
-    if (chatIn) {
-        chatIn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-    
     const setClick = (id, fn) => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('click', fn);
     };
 
-    setClick('btn-ingest', () => {
-        if (modalIngest) {
-            modalIngest.style.display = 'flex';
-            if (titleIn) titleIn.focus();
-        }
-    });
-    setClick('btn-cancel', () => {
-        if (modalIngest) modalIngest.style.display = 'none';
-    });
+    // Ingest Shortcuts
+    if (titleIn) titleIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submitIngestion(); } });
+    if (contentIn) contentIn.addEventListener('keydown', e => { if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); submitIngestion(); } });
+
+    // Chat Shortcuts
+    if (chatInput) chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendMessage(); } });
+
+    // Modals
+    setClick('btn-ingest', () => { if (modalIngest) { modalIngest.style.display = 'flex'; if (titleIn) titleIn.focus(); } });
+    setClick('btn-cancel', () => { if (modalIngest) modalIngest.style.display = 'none'; });
     setClick('btn-submit-ingest', submitIngestion);
-    
+
+    // Settings Modal
+    setClick('btn-settings', () => { if (modalSettings) modalSettings.style.display = 'flex'; });
+    setClick('btn-settings-cancel', () => { if (modalSettings) modalSettings.style.display = 'none'; });
+    setClick('btn-settings-save', () => {
+        saveNeuralConfig(setOpenAI.value, setPinecone.value, setIndex.value);
+    });
+
     const closeBtn = document.querySelector('.btn-close-pane');
     if (closeBtn) closeBtn.addEventListener('click', hideNoteDetails);
-    
     setClick('btn-delete-archive', deleteNote);
 
     // 7. Initialize
@@ -228,14 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_BASE}/chat/history`, { cache: 'no-store' });
             const history = await response.json();
-            if (history.length > 0) {
+            if (history.length > 0 && chatHistory) {
                 chatHistory.innerHTML = '';
                 history.forEach(m => appendMessage(m.role, m.content));
-                const lastTopic = history[history.length - 1].topic;
-                if (lastTopic) {
-                    const badge = document.getElementById('topic-badge');
-                    if (badge) badge.textContent = lastTopic;
-                }
             }
         } catch (err) {}
     }
