@@ -9,6 +9,7 @@
 .env.*
 *.env
 secret_manager.py
+!app/secret_manager.py
 secrets.json
 *.pem
 *.key
