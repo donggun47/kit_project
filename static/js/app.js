@@ -6,19 +6,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const archiveList = document.getElementById('notes-ul');
     const modalIngest = document.getElementById('modal-ingest');
     const detailPane = document.getElementById('detail-pane');
+    const sysStatus = document.getElementById('system-status');
     let currentSelectedId = null;
 
-    // 2. Archive Loading Logic (Stable Version)
+    // 2. Archive Loading Logic (With Cache-Busting)
     async function loadArchives() {
         if (!archiveList) return;
         archiveList.innerHTML = '<li class="loading">Syncing neural subjects...</li>';
         try {
-            const response = await fetch(`${API_BASE}/graph/data`);
+            // Added cache: 'no-store' to force fresh data from Pinecone/DB
+            const response = await fetch(`${API_BASE}/graph/data`, { cache: 'no-store' });
             const data = await response.json();
             
             archiveList.innerHTML = '';
             if (data.nodes && data.nodes.length > 0) {
-                // Group nodes by Topic
                 const topics = {};
                 data.nodes.forEach(node => {
                     const topic = node.data.type || 'General';
@@ -69,7 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm("Delete this memory from your archive?")) return;
 
         try {
-            const response = await fetch(`${API_BASE}/archive/${currentSelectedId}`, { method: 'DELETE' });
+            const response = await fetch(`${API_BASE}/archive/${currentSelectedId}`, { 
+                method: 'DELETE',
+                cache: 'no-store'
+            });
             if (response.ok) {
                 hideNoteDetails();
                 loadArchives();
@@ -84,12 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         appendMessage('user', msg);
         chatInput.value = '';
+        if (sysStatus) sysStatus.textContent = "Socrates is thinking...";
         
         try {
             const response = await fetch(`${API_BASE}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: msg })
+                body: JSON.stringify({ message: msg }),
+                cache: 'no-store'
             });
 
             if (response.ok) {
@@ -101,6 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             appendMessage('ai', "Connection to neural core failed.");
+        } finally {
+            if (sysStatus) sysStatus.textContent = "Socrates Neural Core Active";
         }
     }
 
@@ -112,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
 
-    // 5. Ingestion Logic
+    // 5. Ingestion Logic (Enhanced with Global Guard to prevent duplicates)
+    let isIngesting = false;
     async function submitIngestion() {
         const btn = document.getElementById('btn-submit-ingest');
         const titleInput = document.getElementById('ingest-title');
@@ -120,42 +129,88 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = titleInput.value.trim();
         const content = contentInput.value.trim();
 
-        if (!title || !content || btn.disabled) return;
+        // Dual checking: Boolean guard + Button disabled status
+        if (!title || !content || isIngesting || btn.disabled) return;
+        
+        isIngesting = true;
+        const originalText = btn.textContent;
         btn.disabled = true;
+        btn.textContent = "Syncing...";
 
         try {
             const response = await fetch(`${API_BASE}/ingest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content })
+                body: JSON.stringify({ title, content }),
+                cache: 'no-store'
             });
+
             if (response.ok) {
-                modalIngest.style.display = 'none';
+                // Success: Immediate UI cleanup
+                if (modalIngest) modalIngest.style.display = 'none';
                 titleInput.value = '';
                 contentInput.value = '';
-                loadArchives();
+                await loadArchives();
+            } else {
+                const errorData = await response.json();
+                alert("Archive Sync Failed: " + (errorData.detail || "Unknown error"));
             }
-        } catch (err) { console.error(err); }
-        finally { btn.disabled = false; }
+        } catch (err) { 
+            console.error(err);
+            alert("Neural connection error during sync.");
+        } finally { 
+            isIngesting = false;
+            if (btn) {
+                btn.disabled = false; 
+                btn.textContent = originalText;
+            }
+        }
     }
 
-    // 6. Event Listeners (Safe-Binding)
-    const setClick = (id, fn) => {
-        const el = document.getElementById(id);
-        if (el) el.onclick = fn;
-    };
+    // 6. Event Listeners
+    const titleIn = document.getElementById('ingest-title');
+    const contentIn = document.getElementById('ingest-content');
 
-    if (chatInput) {
-        chatInput.onkeydown = (e) => {
+    // Title field: Enter to submit
+    if (titleIn) {
+        titleIn.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // 엔터 시 줄바꿈 등 기본 동작 방지
+                e.preventDefault();
+                submitIngestion();
+            }
+        });
+    }
+
+    // Content field: Ctrl + Enter to submit
+    if (contentIn) {
+        contentIn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                submitIngestion();
+            }
+        });
+    }
+
+    const chatIn = document.getElementById('chat-input');
+    if (chatIn) {
+        chatIn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
                 sendMessage();
             }
-        };
+        });
     }
     
+    const setClick = (id, fn) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', fn);
+    };
+
     setClick('btn-ingest', () => {
-        if (modalIngest) modalIngest.style.display = 'flex';
+        if (modalIngest) {
+            modalIngest.style.display = 'flex';
+            if (titleIn) titleIn.focus();
+        }
     });
     setClick('btn-cancel', () => {
         if (modalIngest) modalIngest.style.display = 'none';
@@ -163,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setClick('btn-submit-ingest', submitIngestion);
     
     const closeBtn = document.querySelector('.btn-close-pane');
-    if (closeBtn) closeBtn.onclick = hideNoteDetails;
+    if (closeBtn) closeBtn.addEventListener('click', hideNoteDetails);
     
     setClick('btn-delete-archive', deleteNote);
 
@@ -171,13 +226,16 @@ document.addEventListener('DOMContentLoaded', () => {
     loadArchives();
     async function loadChatHistory() {
         try {
-            const response = await fetch(`${API_BASE}/chat/history`);
+            const response = await fetch(`${API_BASE}/chat/history`, { cache: 'no-store' });
             const history = await response.json();
             if (history.length > 0) {
                 chatHistory.innerHTML = '';
                 history.forEach(m => appendMessage(m.role, m.content));
                 const lastTopic = history[history.length - 1].topic;
-                if (lastTopic) document.getElementById('topic-badge').textContent = lastTopic;
+                if (lastTopic) {
+                    const badge = document.getElementById('topic-badge');
+                    if (badge) badge.textContent = lastTopic;
+                }
             }
         } catch (err) {}
     }
