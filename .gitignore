@@ -9,6 +9,8 @@
 .env.*
 *.env
 # Logic files are tracked; secrets are in .env
+!app/*.py
+!app/__init__.py
 secrets.json
 *.pem
 *.key
