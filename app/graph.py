@@ -18,6 +18,8 @@ class SMMAState(TypedDict):
     history: List[BaseMessage]
     current_topic: str # Subject-based memory tag
     api_key: str
+    pinecone_api_key: Optional[str] = None
+    pinecone_index: Optional[str] = None
 
 # --- Node Implementation ---
 
@@ -34,7 +36,7 @@ def external_check_node(state: SMMAState):
 
 def recall_node(state: SMMAState):
     """Retrieves relevant user memories from the Vector DB."""
-    vector_store = get_vector_store(state['api_key'])
+    vector_store = get_vector_store(state['api_key'], state.get('pinecone_api_key'), state.get('pinecone_index'))
     docs = vector_store.similarity_search(state['user_input'], k=3)
     context = "\n".join([d.page_content for d in docs])
     

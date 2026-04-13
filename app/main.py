@@ -91,14 +91,11 @@ def get_graph_data():
 @app.post("/ingest")
 def ingest_data(req: IngestRequest):
     try:
-        # Prioritize pass-thru keys, then environment variables
         target_openai_key = req.openai_api_key or OPENAI_API_KEY
-        
-        # Override environment variables for the scope of this request if provided
-        if req.pinecone_api_key: os.environ["PINECONE_API_KEY"] = req.pinecone_api_key
-        if req.pinecone_index: os.environ["PINECONE_INDEX_NAME"] = req.pinecone_index
-
-        archive_id = SMMAService.ingest_data(req.title, req.content, req.source_type, target_openai_key)
+        archive_id = SMMAService.ingest_data(
+            req.title, req.content, req.source_type, 
+            target_openai_key, req.pinecone_api_key, req.pinecone_index
+        )
         return {"status": "success", "id": archive_id}
     except Exception as e:
         logger.error(f"Ingest error: {e}")
@@ -108,11 +105,9 @@ def ingest_data(req: IngestRequest):
 def chat_interaction(req: ChatRequest):
     try:
         target_openai_key = req.openai_api_key or OPENAI_API_KEY
-        
-        if req.pinecone_api_key: os.environ["PINECONE_API_KEY"] = req.pinecone_api_key
-        if req.pinecone_index: os.environ["PINECONE_INDEX_NAME"] = req.pinecone_index
-
-        return SMMAService.chat_interaction(req.message, target_openai_key)
+        return SMMAService.chat_interaction(
+            req.message, target_openai_key, req.pinecone_api_key, req.pinecone_index
+        )
     except Exception as e:
         logger.error(f"Chat service error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -135,9 +130,10 @@ def run_discovery():
     return discover_relationships(OPENAI_API_KEY)
 
 @app.delete("/archive/{archive_id}")
-def delete_archive(archive_id: str):
+def delete_archive(archive_id: str, openai_api_key: Optional[str] = None, pinecone_api_key: Optional[str] = None, pinecone_index: Optional[str] = None):
     try:
-        success = SMMAService.delete_archive(archive_id, OPENAI_API_KEY)
+        target_openai_key = openai_api_key or OPENAI_API_KEY
+        success = SMMAService.delete_archive(archive_id, target_openai_key, pinecone_api_key, pinecone_index)
         return {"status": "success" if success else "not_found"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

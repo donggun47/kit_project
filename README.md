@@ -30,8 +30,8 @@
 
 - **Backend**: Python 3.10+, FastAPI, Uvicorn.
 - **Orchestration**: LangGraph (Socratic State Logic), LangChain.
-- **Vector Store**: ChromaDB (Semantic Search & RAG).
-- **Database**: SQLite (Subject & Chat Meta Persistence).
+- **Vector Store**: Pinecone (Cloud Semantic Search & RAG) with Auto-Infra Management.
+- **Database**: PostgreSQL via Supabase (Subject & Chat Meta Persistence).
 - **Frontend**: Vanilla JS (ES6+), CSS Mirror-Theme (Dark Mode / Glassmorphism).
 
 ---
@@ -52,9 +52,8 @@
    ```
 
 3. **Configure Environment**:
-   - Copy `.env.template` to `.env`.
-   - Add your `OPENAI_API_KEY`.
-   - Copy `app/secret_manager.py.template` to `app/secret_manager.py` (if not already present).
+   - Set your Supabase `DATABASE_URL` in your `.env` file (Required).
+   - `OPENAI_API_KEY` and `PINECONE_API_KEY` can be entered directly via the Web UI Settings panel (Dynamic Credentials). 
 
 4. **Launch Application**:
    ```bash
@@ -65,8 +64,8 @@
 ---
 
 ## 🛡️ Security & Privacy
-- **Zero Hardcoded Secrets**: Uses a unified `secret_manager` for dynamic key retrieval.
-- **Local-First Data**: All databases (`smma.db`, `chroma_db/`) remain on your local machine and are excluded from Git by default.
+- **Dynamic Credentials via UI**: API keys are dynamically configured in the UI and stored safely in the browser's `localStorage` for zero-setup live demos.
+- **Cloud-Native Data Persistence**: Chat history and mind-map vectors are entirely managed via Supabase and Pinecone, preventing local data loss across server restarts.
 
 ---
 

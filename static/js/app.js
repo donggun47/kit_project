@@ -143,7 +143,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.topic && badge) badge.textContent = data.topic;
             } else {
                 const err = await response.json();
-                appendMessage('ai', `Neural link interrupted: ${err.detail || "Check API Keys"}`);
+                let msg = err.detail || "Check API Keys";
+                if (msg.includes("not found") || msg.includes("NOT_FOUND")) {
+                    msg = "Neural Index is being initialized. Please wait ~60 seconds and try again.";
+                }
+                appendMessage('ai', `Neural link interrupted: ${msg}`);
             }
         } catch (err) {
             appendMessage('ai', "Connection to neural core failed.");

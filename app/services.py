@@ -36,7 +36,7 @@ class SMMAService:
             db.close()
 
     @staticmethod
-    def ingest_data(title: str, content: str, source_type: str, api_key: str):
+    def ingest_data(title: str, content: str, source_type: str, api_key: str, pinecone_api_key: str = None, pinecone_index: str = "smma-brains"):
         db = SessionLocal()
         try:
             # 1. SQL
@@ -46,7 +46,7 @@ class SMMAService:
             db.refresh(new_archive)
             
             # 2. Vector
-            vector_store = get_vector_store(api_key)
+            vector_store = get_vector_store(api_key, pinecone_api_key, pinecone_index)
             vector_store.add_texts(
                 texts=[content],
                 metadatas=[{"id": new_archive.id, "title": title}]
@@ -56,7 +56,7 @@ class SMMAService:
             db.close()
 
     @staticmethod
-    def chat_interaction(message: str, api_key: str):
+    def chat_interaction(message: str, api_key: str, pinecone_api_key: str = None, pinecone_index: str = "smma-brains"):
         db = SessionLocal()
         try:
             # 1. Topic Identification
@@ -86,6 +86,8 @@ class SMMAService:
             initial_state = {
                 "user_input": message,
                 "api_key": api_key,
+                "pinecone_api_key": pinecone_api_key,
+                "pinecone_index": pinecone_index,
                 "history": context_history,
                 "current_topic": topic_tag,
                 "external_truth": "",
@@ -113,7 +115,7 @@ class SMMAService:
             db.close()
 
     @staticmethod
-    def delete_archive(archive_id: str, api_key: str):
+    def delete_archive(archive_id: str, api_key: str, pinecone_api_key: str = None, pinecone_index: str = "smma-brains"):
         db = SessionLocal()
         try:
             search_id = archive_id
@@ -124,7 +126,7 @@ class SMMAService:
             
             if api_key:
                 try:
-                    vector_store = get_vector_store(api_key)
+                    vector_store = get_vector_store(api_key, pinecone_api_key, pinecone_index)
                     vector_store.delete(ids=[archive_id])
                 except Exception as ve:
                     logger.warning(f"Vector cleanup skipped: {ve}")
