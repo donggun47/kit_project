@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: smma-intelligence-hub
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app/main.py
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false # User must set this in Render dashboard
+      - key: PYTHON_VERSION
+        value: 3.10.0
