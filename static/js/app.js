@@ -162,19 +162,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 5. Ingestion Logic
+    // 5. Ingestion Logic (Enhanced with Cooldown & Global Guard)
     let isIngesting = false;
+    let lastSubmitTime = 0;
     async function submitIngestion() {
+        // 1. Mandatory Cooldown (1 second) to prevent hyper-fast double fire
+        const now = Date.now();
+        if (now - lastSubmitTime < 1000) return;
+        
         const btn = document.getElementById('btn-submit-ingest');
         const titleInput = document.getElementById('ingest-title');
         const contentInput = document.getElementById('ingest-content');
+        
+        if (!titleInput || !contentInput) return;
+        
         const title = titleInput.value.trim();
         const content = contentInput.value.trim();
 
+        // 2. Global Guard Check
         if (!title || !content || isIngesting || (btn && btn.disabled)) return;
         
-        const conf = getNeuralConfig();
+        // 3. Lock immediately
         isIngesting = true;
+        lastSubmitTime = now;
+        
+        const conf = getNeuralConfig();
         const originalText = btn ? btn.textContent : "Sync";
         if(btn) {
             btn.disabled = true;
@@ -208,11 +220,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(err);
             alert("Neural connection error during sync.");
         } finally { 
-            isIngesting = false;
-            if (btn) {
-                btn.disabled = false; 
-                btn.textContent = originalText;
-            }
+            // We keep isIngesting true for a short moment extra to be safe
+            setTimeout(() => {
+                isIngesting = false;
+                if (btn) {
+                    btn.disabled = false; 
+                    btn.textContent = originalText;
+                }
+            }, 500);
         }
     }
 

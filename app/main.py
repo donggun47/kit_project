@@ -8,6 +8,7 @@ import logging
 import sys
 import os
 import io
+from typing import Optional
 
 # Import our custom modules (Relative imports for cloud compatibility)
 from app.secret_manager import get_secret
