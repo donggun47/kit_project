@@ -10,11 +10,11 @@ import os
 import io
 
 # Import our custom modules (Relative imports for cloud compatibility)
-from .secret_manager import get_secret
-from .database import init_db, SessionLocal, get_vector_store
-from .models import ChatMessage
-from .services import SMMAService
-from .consolidation import discover_relationships
+from app.secret_manager import get_secret
+from app.database import init_db, SessionLocal, get_vector_store
+from app.models import ChatMessage
+from app.services import SMMAService
+from app.consolidation import discover_relationships
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 
 # --- Logging Setup ---
@@ -99,8 +99,8 @@ def chat_interaction(req: ChatRequest):
 
 @app.get("/chat/history")
 def get_chat_history():
-    from .database import SessionLocal
-    from .models import ChatMessage
+    from app.database import SessionLocal
+    from app.models import ChatMessage
     db = SessionLocal()
     try:
         msgs = db.query(ChatMessage).order_by(ChatMessage.timestamp.asc()).limit(50).all()

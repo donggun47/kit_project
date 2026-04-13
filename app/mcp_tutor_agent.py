@@ -1,7 +1,7 @@
 from fastmcp import FastMCP
 import os
 from dotenv import load_dotenv
-from .secret_manager import get_secret
+from app.secret_manager import get_secret
 
 # --- Configuration & Context ---
 # Load environment variables for local testing

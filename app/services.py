@@ -1,10 +1,10 @@
 import logging
 from sqlalchemy.orm import Session
-from .database import SessionLocal, get_vector_store
-from .models import Archive, ChatMessage, knowledge_links
+from app.database import SessionLocal, get_vector_store
+from app.models import Archive, ChatMessage, knowledge_links
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
-from .graph import create_smma_graph
+from app.graph import create_smma_graph
 
 logger = logging.getLogger("SMMA-Services")
 

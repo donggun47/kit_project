@@ -3,7 +3,8 @@ uvicorn
 sqlalchemy
 langchain
 langchain-openai
-langchain-chroma
+pinecone
+langchain-pinecone
 langgraph
 python-dotenv
 pydantic

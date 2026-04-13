@@ -3,7 +3,7 @@ import getpass
 from typing import Optional
 from dotenv import load_dotenv
 
-# Load environment variables from .env file (fixed absolute path for app/ folder)
+# Load environment variables from app.env file (fixed absolute path for app/ folder)
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
 load_dotenv(env_path)
 
