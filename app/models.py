@@ -42,3 +42,4 @@ class ChatMessage(Base):
     content = Column(Text, nullable=False)
     topic_tag = Column(String(100), index=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
+ 

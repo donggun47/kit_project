@@ -31,3 +31,4 @@ def get_vector_store(api_key: str):
         persist_directory=persist_directory
     )
     return vector_store
+ 

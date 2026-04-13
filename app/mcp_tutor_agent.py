@@ -54,3 +54,4 @@ def socratic_system_prompt(topic: str) -> str:
 if __name__ == "__main__":
     # The server runs via stdio for seamless integration with AI clients
     mcp.run()
+ 

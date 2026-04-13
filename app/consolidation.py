@@ -87,3 +87,4 @@ def discover_relationships(api_key: str):
         return {"status": "error", "detail": str(e)}
     finally:
         db.close()
+ 

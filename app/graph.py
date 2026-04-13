@@ -110,3 +110,4 @@ def create_smma_graph():
 def get_graph_visualization():
     graph = create_smma_graph()
     return graph.get_graph().draw_mermaid()
+ 

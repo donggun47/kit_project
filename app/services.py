@@ -139,3 +139,4 @@ class SMMAService:
             raise e
         finally:
             db.close()
+ 
