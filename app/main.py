@@ -100,7 +100,8 @@ def chat_interaction(req: ChatRequest):
 
 @app.get("/chat/history")
 def get_chat_history():
-    from app.sql import SessionLocal, ChatMessage
+    from app.database import SessionLocal
+    from app.models import ChatMessage
     db = SessionLocal()
     try:
         msgs = db.query(ChatMessage).order_by(ChatMessage.timestamp.asc()).limit(50).all()
