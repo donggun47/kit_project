@@ -3,7 +3,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, END
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from app.database import get_vector_store
+from .database import get_vector_store
 import os
 
 # --- State Definition ---

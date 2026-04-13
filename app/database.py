@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
-from app.models import Base
+from .models import Base
 import os
 
 # --- SQL Connectivity ---

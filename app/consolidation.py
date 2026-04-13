@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from app.database import SessionLocal, get_vector_store
-from app.models import Archive, knowledge_links
+from .database import SessionLocal, get_vector_store
+from .models import Archive, knowledge_links
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 import os

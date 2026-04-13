@@ -8,8 +8,7 @@
 .env
 .env.*
 *.env
-secret_manager.py
-!app/secret_manager.py
+# Logic files are tracked; secrets are in .env
 secrets.json
 *.pem
 *.key
